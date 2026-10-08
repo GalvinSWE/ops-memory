@@ -8,6 +8,7 @@
 import { defineConfig } from '@ops-memory/core';
 import { cleanover } from '@ops-memory/connector-cleanover';
 import { sqlite } from '@ops-memory/store-sqlite';
+import { postgres } from '@ops-memory/store-postgres';
 import { anthropic } from '@ops-memory/llm-anthropic';
 
 const required = (name: string) => {
@@ -23,7 +24,10 @@ export default defineConfig({
       businessId: process.env.CLEANOVER_BUSINESS_ID || undefined
     })
   ],
-  store: sqlite({ path: process.env.OPS_MEMORY_DB ?? './ops-memory.db' }),
+  // A Postgres database of its own when OPS_MEMORY_DATABASE_URL is set (never CleanOver's), else a SQLite file.
+  store: process.env.OPS_MEMORY_DATABASE_URL
+    ? postgres({ connectionString: process.env.OPS_MEMORY_DATABASE_URL })
+    : sqlite({ path: process.env.OPS_MEMORY_DB ?? './ops-memory.db' }),
 
   // Extraction reads a lot of text and runs on every sync: Claude Haiku 5.5 keeps that cheap.
   // Answers are few and read by people: Claude Opus 5.5 by default. Both are one line to change.

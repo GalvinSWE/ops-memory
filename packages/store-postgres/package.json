@@ -1,0 +1,26 @@
+{
+  "name": "@ops-memory/store-postgres",
+  "version": "0.1.0",
+  "description": "Postgres store for ops-memory: one shared store for several readers and machines, in its own database or schema.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@ops-memory/core": "0.1.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  },
+  "license": "UNLICENSED"
+}

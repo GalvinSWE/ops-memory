@@ -64,10 +64,13 @@ technician. ops-memory reads it once, keeps what lasts, and drops what it cannot
 | --- | --- |
 | [`@ops-memory/core`](packages/core) | Facts, evidence, the sync pipeline, plugin interfaces, `createMemory()`. No dependencies. |
 | [`@ops-memory/store-sqlite`](packages/store-sqlite) | Store on Node's built-in `node:sqlite`: one file, no native build. |
+| [`@ops-memory/store-postgres`](packages/store-postgres) | Postgres store in a database (or schema) of its own: shared by several readers and machines. |
 | [`@ops-memory/llm-anthropic`](packages/llm-anthropic) | Claude provider: structured extraction and grounded answers. |
+| [`@ops-memory/llm-ollama`](packages/llm-ollama) | Local model through Ollama: free, nothing leaves the machine. |
 | [`@ops-memory/connector-cleanover`](packages/connector-cleanover) | Reads CleanOver's Postgres: units, maintenance tickets and comments, reviews. |
 | [`@ops-memory/mcp`](packages/mcp) | MCP server with read-only tools for Claude and other MCP clients. |
-| [`@ops-memory/cli`](packages/cli) | `ops-memory` command: `sync`, `ask`, `profile`, `search`, `status`, `serve`. |
+| [`@ops-memory/voice-core`](packages/voice-core), [`voice-server`](packages/voice-server), [`@galvinswe/ops-memory-voice-web`](packages/voice-web) | Ask by voice: browser speech, an HTTP endpoint, spoken answers with sources. |
+| [`@ops-memory/cli`](packages/cli) | `ops-memory` command: `sync`, `ask`, `profile`, `search`, `status`, `serve`, `voice`. |
 
 ## Quick start
 

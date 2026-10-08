@@ -99,6 +99,34 @@ cleanover({
 Sources: `maintenance_ticket`, `maintenance_comment` (comments written by people; system log lines
 are excluded), `review` (public text and private feedback, with the rating).
 
+## Postgres store (`@ops-memory/store-postgres`)
+
+```ts
+postgres({
+  connectionString: process.env.OPS_MEMORY_DATABASE_URL!,  // a database ops-memory owns
+  schema: 'public',          // created if missing; lets tenants or tests share a database
+  maxConnections: 5
+})
+```
+
+Give ops-memory **its own database** (`CREATE DATABASE ops_memory`), on the same server as the
+source if you like, never the source database itself: the connector only reads the source, the
+store writes here. Migrations run on start, under an advisory lock so several processes can start
+at once. Several readers (voice server, MCP, CLI) can share it across machines; still run `sync`
+from one place.
+
+To move an existing SQLite store over without re-reading events:
+
+```bash
+node scripts/sqlite-to-postgres.mjs ./ops-memory.db "$OPS_MEMORY_DATABASE_URL"
+```
+
+Stop `sync` and servers using the SQLite file first. The example configs pick Postgres whenever
+`OPS_MEMORY_DATABASE_URL` is set.
+
+The Postgres tests run against a throwaway schema when `OPS_MEMORY_TEST_DATABASE_URL` is set and
+are skipped otherwise.
+
 ## SQLite store (`@ops-memory/store-sqlite`)
 
 ```ts

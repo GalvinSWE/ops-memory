@@ -30,7 +30,7 @@ ten runs with their status (`completed`, `budget_exhausted`, `failed`).
 
 ## Backups
 
-The store is one SQLite file (plus `-wal`/`-shm` while open). Copy it while no `sync` is running, or
+Postgres store: back up its database like any other (`pg_dump ops_memory`). SQLite store: the store is one SQLite file (plus `-wal`/`-shm` while open). Copy it while no `sync` is running, or
 use `sqlite3 ops-memory.db ".backup backup.db"`. Everything in it can be rebuilt from the source by
 deleting it and syncing again, at the cost of the extraction tokens.
 

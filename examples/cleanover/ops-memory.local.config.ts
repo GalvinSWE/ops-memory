@@ -9,6 +9,7 @@
 import { defineConfig } from '@ops-memory/core';
 import { cleanover } from '@ops-memory/connector-cleanover';
 import { sqlite } from '@ops-memory/store-sqlite';
+import { postgres } from '@ops-memory/store-postgres';
 import { ollama } from '@ops-memory/llm-ollama';
 
 const required = (name: string) => {
@@ -24,7 +25,10 @@ export default defineConfig({
       businessId: process.env.CLEANOVER_BUSINESS_ID || undefined
     })
   ],
-  store: sqlite({ path: process.env.OPS_MEMORY_DB ?? './ops-memory.db' }),
+  // A Postgres database of its own when OPS_MEMORY_DATABASE_URL is set (never CleanOver's), else a SQLite file.
+  store: process.env.OPS_MEMORY_DATABASE_URL
+    ? postgres({ connectionString: process.env.OPS_MEMORY_DATABASE_URL })
+    : sqlite({ path: process.env.OPS_MEMORY_DB ?? './ops-memory.db' }),
   llm: ollama({ extractModel: process.env.OLLAMA_MODEL ?? 'qwen2.5:7b' }),
 
   subjects: ['unit'],

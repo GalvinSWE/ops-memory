@@ -81,7 +81,7 @@ At most 20 pieces of evidence are kept per fact (the newest); confidence still r
 
 ## Storage
 
-The SQLite store (`packages/store-sqlite/src/migrations.ts`) has these tables:
+Both stores (`packages/store-sqlite/src/migrations.ts`, `packages/store-postgres/src/migrations.ts`) have these tables:
 
 | Table | Holds |
 | --- | --- |

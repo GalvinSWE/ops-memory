@@ -6,6 +6,7 @@
   "workspaces": [
     "packages/core",
     "packages/store-sqlite",
+    "packages/store-postgres",
     "packages/llm-anthropic",
     "packages/llm-ollama",
     "packages/connector-cleanover",
