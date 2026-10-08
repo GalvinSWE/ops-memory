@@ -21,6 +21,8 @@ export interface OllamaProviderOptions {
   temperature?: { extract?: number; answer?: number };
   /** Per request. Local models are slow on long batches. Default 10 minutes. */
   timeoutMs?: number;
+  /** How long Ollama keeps the model in memory after a request. Default `30m`, so a voice question does not wait for a reload. */
+  keepAlive?: string;
   /** Override for tests. */
   fetch?: typeof fetch;
 }
@@ -54,7 +56,7 @@ export function ollama(options: OllamaProviderOptions = {}): LlmProvider {
       res = await doFetch(`${base}/api/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ stream: false, ...body }),
+        body: JSON.stringify({ stream: false, keep_alive: options.keepAlive ?? '30m', ...body }),
         signal: AbortSignal.timeout(timeoutMs)
       });
     } catch (error) {

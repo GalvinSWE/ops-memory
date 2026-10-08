@@ -86,6 +86,7 @@ export function createVoiceHandler(memory: OpsMemory, options: VoiceServerOption
         const body = (await readJson(req)) as VoiceAskRequest;
         const mode = options.allowModel === false ? 'facts' : body.mode;
         const started = Date.now();
+        log(`ask started (${String(body.question ?? '').length} chars, mode ${mode ?? options.defaultMode ?? 'auto'})`);
         const result = await answerTurn(
           memory,
           { question: String(body.question ?? ''), unit: body.unit ? String(body.unit) : undefined, mode },

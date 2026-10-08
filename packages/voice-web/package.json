@@ -1,6 +1,6 @@
 {
   "name": "@ops-memory/voice-web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser voice client for ops-memory: push to talk, hear the answer, see its sources. Web Speech API, no dependencies; optional React hook.",
   "type": "module",
   "main": "./dist/index.js",

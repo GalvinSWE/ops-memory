@@ -26,7 +26,7 @@ export interface VoiceAskOptions {
   unit?: string;
   /** Read answers out loud. Default true. */
   speak?: boolean;
-  /** Give up on the server after this long. Default 30 s. */
+  /** Give up on the server after this long. Default 60 s; local models can need more. */
   timeoutMs?: number;
   /** For tests or custom transports. Default: global `fetch`. */
   fetch?: typeof fetch;
@@ -71,7 +71,7 @@ export const IDLE_SNAPSHOT: VoiceSnapshot = Object.freeze({
  * called, so it is safe to create during server-side rendering.
  */
 export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
-  let options = { language: 'en-US', speak: true, timeoutMs: 30_000, ...initial };
+  let options = { language: 'en-US', speak: true, timeoutMs: 60_000, ...initial };
   let snapshot: VoiceSnapshot = IDLE_SNAPSHOT;
   const listeners = new Set<() => void>();
   let recognition: Recognition | null = null;
@@ -112,7 +112,11 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
     request?.abort();
     const controller = new AbortController();
     request = controller;
-    const timer = setTimeout(() => controller.abort(), options.timeoutMs);
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, options.timeoutMs);
     set({ state: 'thinking', transcript: text, interim: '', error: null });
     try {
       const doFetch = options.fetch ?? fetch;
@@ -133,9 +137,12 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
       else set({ state: 'idle' });
       return body;
     } catch (error) {
-      if (request !== controller) return null;
-      const aborted = controller.signal.aborted;
-      set({ state: 'error', error: aborted ? 'The memory server took too long to answer.' : messageOf(error) });
+      // Superseded or cancelled by the person: not an error worth showing.
+      if (request !== controller || (controller.signal.aborted && !timedOut)) return null;
+      set({
+        state: 'error',
+        error: timedOut ? `The memory server did not answer within ${Math.round(options.timeoutMs / 1000)} s.` : messageOf(error)
+      });
       return null;
     } finally {
       clearTimeout(timer);
@@ -154,7 +161,9 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
       const Ctor = recognitionCtor();
       if (!Ctor) return set({ state: 'error', error: 'This browser cannot recognise speech. Use Chrome, Edge or Safari, or type the question.' });
       stopSpeech();
-      request?.abort();
+      const inFlight = request;
+      request = null; // detach first, so its abort is not reported as an error
+      inFlight?.abort();
       recognition?.abort();
       finalText = '';
       const rec = new Ctor();
@@ -196,8 +205,9 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
     cancel() {
       recognition?.abort();
       recognition = null;
-      request?.abort();
+      const inFlight = request;
       request = null;
+      inFlight?.abort();
       stopSpeech();
       set({ state: 'idle', interim: '' });
     },
