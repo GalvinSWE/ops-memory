@@ -9,6 +9,9 @@
     "packages/llm-anthropic",
     "packages/connector-cleanover",
     "packages/mcp",
+    "packages/voice-core",
+    "packages/voice-server",
+    "packages/voice-web",
     "packages/cli"
   ],
   "engines": {

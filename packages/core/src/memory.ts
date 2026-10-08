@@ -21,6 +21,11 @@ export interface AskResult {
   usage: LlmUsage | null;
 }
 
+export interface RecallResult {
+  facts: Fact[];
+  subjects: SourceSubject[];
+}
+
 export interface SubjectProfile {
   subject: SourceSubject | null;
   active: Fact[];
@@ -44,12 +49,14 @@ export interface OpsMemory {
   facts(query: FactQuery): Promise<Fact[]>;
   search(text: string, options?: { subject?: SubjectRef; limit?: number }): Promise<Fact[]>;
   findSubjects(text: string): Promise<SourceSubject[]>;
+  /** The subjects named in a question and their facts, without calling a model. What `ask` answers from. */
+  recall(question: string, options?: AskOptions): Promise<RecallResult>;
   ask(question: string, options?: AskOptions): Promise<AskResult>;
   status(): Promise<StatusReport>;
   close(): Promise<void>;
 }
 
-const NO_FACTS_ANSWER =
+export const NO_FACTS_ANSWER =
   'ops-memory has no facts that answer this yet. Run `ops-memory sync`, or ask about a specific unit by name.';
 
 /** Words in a question long enough to look up as a subject name, e.g. a unit alias. */
@@ -78,7 +85,7 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
     return [...found.values()];
   }
 
-  return {
+  const api: OpsMemory = {
     config,
     init,
 
@@ -118,24 +125,25 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
       return store.findSubjects(text);
     },
 
-    async ask(question, options = {}) {
+    async recall(question, options = {}) {
       await init();
       const maxFacts = options.maxFacts ?? 40;
-      let subjects: SourceSubject[] = [];
-      let facts: Fact[] = [];
-
       if (options.subject) {
         const s = await store.getSubject(options.subject);
-        subjects = s ? [s] : [];
-        facts = await store.listFacts({ subject: options.subject, status: 'all', limit: maxFacts });
-      } else {
-        subjects = await subjectsInQuestion(question);
-        for (const s of subjects) {
-          facts.push(...(await store.listFacts({ subject: s, status: 'all', limit: Math.ceil(maxFacts / subjects.length) })));
-        }
-        if (!subjects.length) facts = await store.searchFacts({ text: question, status: 'all', limit: maxFacts });
+        const facts = await store.listFacts({ subject: options.subject, status: 'all', limit: maxFacts });
+        return { facts, subjects: s ? [s] : [] };
       }
+      const subjects = await subjectsInQuestion(question);
+      const facts: Fact[] = [];
+      for (const s of subjects) {
+        facts.push(...(await store.listFacts({ subject: s, status: 'all', limit: Math.ceil(maxFacts / subjects.length) })));
+      }
+      if (!subjects.length) facts.push(...(await store.searchFacts({ text: question, status: 'all', limit: maxFacts })));
+      return { facts, subjects };
+    },
 
+    async ask(question, options = {}) {
+      const { facts, subjects } = await api.recall(question, options);
       if (!facts.length) return { answer: NO_FACTS_ANSWER, facts: [], subjects, usage: null };
       const { answer, usage } = await llm.answer({ question, facts, subjects });
       return { answer, facts, subjects, usage };
@@ -163,6 +171,7 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
       await store.close();
     }
   };
+  return api;
 }
 
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

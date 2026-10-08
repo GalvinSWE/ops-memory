@@ -1,7 +1,16 @@
 export * from './types.js';
 export * from './plugins.js';
 export { defineConfig, resolveConfig, type OpsMemoryConfig, type ResolvedConfig } from './config.js';
-export { createMemory, type OpsMemory, type AskOptions, type AskResult, type SubjectProfile, type StatusReport } from './memory.js';
+export {
+  createMemory,
+  NO_FACTS_ANSWER,
+  type OpsMemory,
+  type AskOptions,
+  type AskResult,
+  type RecallResult,
+  type SubjectProfile,
+  type StatusReport
+} from './memory.js';
 export { syncConnector, batchEvents, type SyncOptions, type SyncResult } from './pipeline.js';
 export { BUILT_IN_FACT_KINDS, DEFAULT_FACT_KINDS, defaultMergeKey, slug } from './fact-kinds.js';
 export { redact, DEFAULT_REDACTION, type RedactionOptions, type RedactionRule } from './redact.js';

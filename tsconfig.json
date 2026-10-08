@@ -1,11 +1,32 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/core" },
-    { "path": "packages/store-sqlite" },
-    { "path": "packages/llm-anthropic" },
-    { "path": "packages/connector-cleanover" },
-    { "path": "packages/mcp" },
-    { "path": "packages/cli" }
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/store-sqlite"
+    },
+    {
+      "path": "packages/llm-anthropic"
+    },
+    {
+      "path": "packages/connector-cleanover"
+    },
+    {
+      "path": "packages/mcp"
+    },
+    {
+      "path": "packages/voice-core"
+    },
+    {
+      "path": "packages/voice-server"
+    },
+    {
+      "path": "packages/voice-web"
+    },
+    {
+      "path": "packages/cli"
+    }
   ]
 }

@@ -12,10 +12,7 @@
       "path": "../core"
     },
     {
-      "path": "../mcp"
-    },
-    {
-      "path": "../voice-server"
+      "path": "../voice-core"
     }
   ]
 }

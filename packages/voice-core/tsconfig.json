@@ -10,12 +10,6 @@
   "references": [
     {
       "path": "../core"
-    },
-    {
-      "path": "../mcp"
-    },
-    {
-      "path": "../voice-server"
     }
   ]
 }

@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { createMemory, type OpsMemory, type SubjectRef } from '@ops-memory/core';
 import { formatAnswer, formatFacts, formatProfile, formatSubjects, serveStdio } from '@ops-memory/mcp';
+import { startVoiceServer } from '@ops-memory/voice-server';
 import { findConfig, loadConfig } from './load-config.js';
 import { CONFIG_TEMPLATE } from './template.js';
 
@@ -26,6 +27,12 @@ Commands
   status                    Counts, checkpoints, today's spend, recent runs
   serve                     Run as an MCP server on stdio (read-only tools)
       --no-ask                Hide the ask tool (no model spend from clients)
+  voice                     HTTP server for voice clients (POST /v1/ask)
+      --port <n>              Default 7401
+      --host <addr>           Default 127.0.0.1 (this machine only)
+      --origin <url>          Allowed browser origin; repeat for several (default localhost:3000)
+      --mode <auto|facts|model>  Default auto; facts never calls a model
+      Token: set OPS_MEMORY_VOICE_TOKEN to require "Authorization: Bearer <token>"
 
 Global options
   --config <file>           Config file (default: ops-memory.config.ts in the current folder)
@@ -46,6 +53,10 @@ export async function main(argv: string[], out: Out = { log: console.log, error:
       unit: { type: 'string' },
       'no-sources': { type: 'boolean' },
       'no-ask': { type: 'boolean' },
+      port: { type: 'string' },
+      host: { type: 'string' },
+      origin: { type: 'string', multiple: true },
+      mode: { type: 'string' },
       help: { type: 'boolean', short: 'h' }
     }
   });
@@ -72,7 +83,7 @@ export async function main(argv: string[], out: Out = { log: console.log, error:
     await memory.init();
     return await run(memory, command, rest, values, out);
   } finally {
-    if (command !== 'serve') await memory.close();
+    if (command !== 'serve' && command !== 'voice') await memory.close();
   }
 }
 
@@ -91,7 +102,7 @@ async function run(
   memory: OpsMemory,
   command: string,
   args: string[],
-  values: Record<string, string | boolean | undefined>,
+  values: Record<string, string | boolean | string[] | undefined>,
   out: Out
 ): Promise<number> {
   switch (command) {
@@ -158,6 +169,21 @@ async function run(
       // stdout belongs to the MCP protocol from here on; log to stderr only.
       await serveStdio(memory, { allowAsk: !values['no-ask'] });
       out.error('ops-memory MCP server running on stdio');
+      return 0;
+    }
+    case 'voice': {
+      const mode = (values.mode as string | undefined) ?? 'auto';
+      if (!['auto', 'facts', 'model'].includes(mode)) throw new Error('--mode must be auto, facts or model');
+      const { url } = await startVoiceServer(memory, {
+        port: values.port ? Number(values.port) : undefined,
+        host: values.host as string | undefined,
+        allowedOrigins: values.origin as string[] | undefined,
+        token: process.env.OPS_MEMORY_VOICE_TOKEN || undefined,
+        defaultMode: mode as 'auto' | 'facts' | 'model',
+        allowModel: mode !== 'facts',
+        log: (line) => out.error(line)
+      });
+      out.log(`ops-memory voice server on ${url} (mode ${mode})`);
       return 0;
     }
     default:
