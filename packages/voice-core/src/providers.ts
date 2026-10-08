@@ -1,6 +1,6 @@
 /**
  * Server-side speech providers, for phase 2. Phase 1 runs speech in the browser
- * (`@ops-memory/voice-web` uses the Web Speech API), so nothing implements these yet; they fix the
+ * (`@galvinswe/ops-memory-voice-web` uses the Web Speech API), so nothing implements these yet; they fix the
  * seam so a cloud or self-hosted engine plugs in without touching the rest.
  */
 

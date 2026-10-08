@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createVoiceAsk } from '@ops-memory/voice-web';
+import { createVoiceAsk } from '@galvinswe/ops-memory-voice-web';
 
 const answer = {
   question: 'q',

@@ -1,6 +1,6 @@
 /**
  * The wire format between a voice client and a voice server. Plain JSON, versioned by path
- * (`/v1/ask`). `@ops-memory/voice-web` keeps its own copy of these types so it installs with no
+ * (`/v1/ask`). `@galvinswe/ops-memory-voice-web` keeps its own copy of these types so it installs with no
  * dependencies; change both together.
  */
 

@@ -1,7 +1,15 @@
 {
-  "name": "@ops-memory/voice-web",
+  "name": "@galvinswe/ops-memory-voice-web",
   "version": "0.1.2",
   "description": "Browser voice client for ops-memory: push to talk, hear the answer, see its sources. Web Speech API, no dependencies; optional React hook.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GalvinSWE/ops-memory.git",
+    "directory": "packages/voice-web"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
