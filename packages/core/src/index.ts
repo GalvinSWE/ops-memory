@@ -17,3 +17,4 @@ export { redact, DEFAULT_REDACTION, type RedactionOptions, type RedactionRule } 
 export { verifyExtracted, normalizeForMatch, type Verification, type RejectReason } from './verify.js';
 export { mergeFact, confidenceFor, MAX_EVIDENCE_PER_FACT } from './merge.js';
 export { factId, sha1 } from './ids.js';
+export { extractionSystemPrompt, extractionUserPrompt, ANSWER_SYSTEM_PROMPT, answerUserPrompt } from './prompts.js';

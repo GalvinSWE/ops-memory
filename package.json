@@ -7,6 +7,7 @@
     "packages/core",
     "packages/store-sqlite",
     "packages/llm-anthropic",
+    "packages/llm-ollama",
     "packages/connector-cleanover",
     "packages/mcp",
     "packages/voice-core",

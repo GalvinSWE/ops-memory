@@ -1,4 +1,5 @@
-import type { Fact, FactKind, SourceEvent, SourceSubject, SubjectRef } from '@ops-memory/core';
+import type { FactKind } from './plugins.js';
+import type { Fact, SourceEvent, SourceSubject, SubjectRef } from './types.js';
 
 /**
  * Kept stable across requests (no dates, no ids) so it can be cached; everything that varies goes

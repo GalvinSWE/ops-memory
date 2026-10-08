@@ -11,6 +11,9 @@
       "path": "packages/llm-anthropic"
     },
     {
+      "path": "packages/llm-ollama"
+    },
+    {
       "path": "packages/connector-cleanover"
     },
     {

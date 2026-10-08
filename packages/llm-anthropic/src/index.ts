@@ -1,8 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
+import { ANSWER_SYSTEM_PROMPT, answerUserPrompt, extractionSystemPrompt, extractionUserPrompt } from '@ops-memory/core';
 import type { ExtractedFact, LlmProvider, LlmUsage } from '@ops-memory/core';
-import { ANSWER_SYSTEM_PROMPT, answerUserPrompt, extractionSystemPrompt, extractionUserPrompt } from './prompts.js';
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
@@ -103,4 +103,4 @@ export function anthropic(options: AnthropicProviderOptions = {}): LlmProvider {
   };
 }
 
-export { extractionSystemPrompt, extractionUserPrompt, ANSWER_SYSTEM_PROMPT, answerUserPrompt } from './prompts.js';
+export { extractionSystemPrompt, extractionUserPrompt, ANSWER_SYSTEM_PROMPT, answerUserPrompt } from '@ops-memory/core';
