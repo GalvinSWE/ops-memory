@@ -1,0 +1,23 @@
+{
+  "name": "@ops-memory/core",
+  "version": "0.1.0",
+  "description": "Core of ops-memory: facts, evidence, the sync pipeline and the plugin interfaces.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "license": "UNLICENSED"
+}

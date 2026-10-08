@@ -1,0 +1,26 @@
+{
+  "name": "@ops-memory/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for ops-memory: lets Claude (or any MCP client) read unit profiles, search facts and ask questions.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@ops-memory/core": "0.1.0",
+    "zod": "^4.6.5"
+  },
+  "license": "UNLICENSED"
+}

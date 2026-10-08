@@ -1,0 +1,22 @@
+{
+  "name": "@ops-memory/store-sqlite",
+  "version": "0.1.0",
+  "description": "SQLite store for ops-memory, on Node's built-in node:sqlite (no native build).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@ops-memory/core": "0.1.0"
+  },
+  "license": "UNLICENSED"
+}

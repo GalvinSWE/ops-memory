@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/store-sqlite" },
+    { "path": "packages/llm-anthropic" },
+    { "path": "packages/connector-cleanover" },
+    { "path": "packages/mcp" },
+    { "path": "packages/cli" }
+  ]
+}

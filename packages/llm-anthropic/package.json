@@ -1,0 +1,26 @@
+{
+  "name": "@ops-memory/llm-anthropic",
+  "version": "0.1.0",
+  "description": "Claude provider for ops-memory: structured fact extraction and grounded answers.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
+    "@ops-memory/core": "0.1.0",
+    "zod": "^4.6.5"
+  },
+  "license": "UNLICENSED"
+}

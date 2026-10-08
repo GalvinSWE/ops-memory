@@ -1,0 +1,29 @@
+{
+  "name": "@ops-memory/cli",
+  "version": "0.1.0",
+  "description": "Command line for ops-memory: sync, ask, profile, status, and serve as an MCP server.",
+  "type": "module",
+  "bin": {
+    "ops-memory": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@ops-memory/core": "0.1.0",
+    "@ops-memory/mcp": "0.1.0",
+    "tsx": "^4.23.15"
+  },
+  "license": "UNLICENSED"
+}
