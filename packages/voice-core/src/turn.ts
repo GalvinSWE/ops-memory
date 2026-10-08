@@ -1,5 +1,4 @@
 import type { Fact, OpsMemory, SourceSubject, SubjectRef } from '@ops-memory/core';
-import { NO_FACTS_ANSWER } from '@ops-memory/core';
 import type { AnswerMode, VoiceAskRequest, VoiceAskResponse, VoiceSource } from './protocol.js';
 import { spokenDate, toSpeech } from './speech.js';
 
@@ -34,9 +33,11 @@ export async function answerTurn(memory: OpsMemory, request: VoiceAskRequest, op
   if (mode !== 'facts') {
     try {
       const result = await memory.ask(question, { subject });
-      // No facts means no model call: say so honestly in `answeredBy`.
-      const by = result.usage ? 'model' : 'facts';
-      return build(question, result.answer, toSpeech(result.answer, maxChars), by, result.facts, result.subjects, result.usage?.costUsd ?? 0);
+      if (!result.facts.length) {
+        const text = await nothingFound(memory, question, result.subjects);
+        return build(question, text, toSpeech(text, maxChars), 'facts', [], result.subjects, 0);
+      }
+      return build(question, result.answer, toSpeech(result.answer, maxChars), 'model', result.facts, result.subjects, result.usage?.costUsd ?? 0);
     } catch (error) {
       if (mode === 'model') throw error;
       options.onFallback?.(error);
@@ -44,7 +45,7 @@ export async function answerTurn(memory: OpsMemory, request: VoiceAskRequest, op
   }
 
   const { facts, subjects } = await memory.recall(question, { subject });
-  const text = factsAnswer(facts, subjects, options.maxSpokenFacts ?? 5);
+  const text = facts.length ? factsAnswer(facts, subjects, options.maxSpokenFacts ?? 5) : await nothingFound(memory, question, subjects);
   return build(question, text, toSpeech(text, maxChars), 'facts', facts, subjects, 0);
 }
 
@@ -53,7 +54,7 @@ export async function answerTurn(memory: OpsMemory, request: VoiceAskRequest, op
  * first, then what was fixed. Used when there is no model, or to keep a turn free.
  */
 export function factsAnswer(facts: readonly Fact[], subjects: readonly SourceSubject[], maxFacts = 5): string {
-  if (!facts.length) return NO_FACTS_ANSWER;
+  if (!facts.length) return 'No notes found.';
   const names = new Map(subjects.map((s) => [`${s.type}:${s.id}`, s.name]));
   const byUnit = new Map<string, Fact[]>();
   for (const f of facts) {
@@ -108,6 +109,24 @@ function build(
     units: subjects.map((s) => ({ id: s.id, name: s.name })),
     costUsd
   };
+}
+
+/**
+ * What to say when nothing answers: repeat what was heard (speech recognition may have misheard the
+ * unit), and name a few units that do have notes so the person can try one.
+ */
+export async function nothingFound(memory: OpsMemory, question: string, subjects: readonly SourceSubject[]): Promise<string> {
+  if (subjects.length) {
+    return `I have no notes about ${subjects.map((s) => s.name).join(' or ')} yet.`;
+  }
+  const known: string[] = [];
+  for (const f of await memory.facts({ status: 'active', limit: 200 })) {
+    const s = await memory.config.store.getSubject(f.subject);
+    if (s && !known.includes(s.name)) known.push(s.name);
+    if (known.length >= 3) break;
+  }
+  const heard = `I heard "${question}" but did not recognise a unit name in it.`;
+  return known.length ? `${heard} Units with notes include ${known.join(', ')}.` : `${heard} No unit has notes yet: run ops-memory sync first.`;
 }
 
 async function resolveUnit(memory: OpsMemory, nameOrId: string): Promise<SubjectRef | undefined> {

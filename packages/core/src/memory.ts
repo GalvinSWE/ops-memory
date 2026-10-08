@@ -59,12 +59,59 @@ export interface OpsMemory {
 export const NO_FACTS_ANSWER =
   'ops-memory has no facts that answer this yet. Run `ops-memory sync`, or ask about a specific unit by name.';
 
-/** Words in a question long enough to look up as a subject name, e.g. a unit alias. */
-const candidateNames = (question: string): string[] => {
-  const words = question.match(/[\p{L}\p{N}][\p{L}\p{N}#'’._-]*/gu) ?? [];
-  const pairs = words.slice(0, -1).map((w, i) => `${w} ${words[i + 1]}`);
-  return [...pairs, ...words].filter((w) => w.length >= 3);
+/**
+ * Words that say nothing about a unit, dropped before keyword search so "hello there" or "what is
+ * the …" does not match every fact containing "there" or "what". English and Vietnamese.
+ */
+const STOP_WORDS = new Set(
+  (
+    'a an the and or but if then so to of in on at by for from with about into over under is are was were be been ' +
+    'being do does did have has had can could should would will shall may might must i me my we our you your he she ' +
+    'it its they them their this that these those there here what which who whom whose when where why how any some ' +
+    'all no not yes hello hi hey please thanks thank tell know show give get got need want like just also very more ' +
+    'most much many anything something everything nothing unit units place property ' +
+    'có không là của và hay hoặc thì mà với cho các những một này kia đó gì nào sao thế nào ở tại về trong ngoài ' +
+    'bị được đã đang sẽ cần biết xin chào bạn tôi mình căn nhà phòng'
+  ).split(/\s+/)
+);
+
+/** The words of a question worth searching for: no stop words, no very short words. */
+export const searchWords = (question: string): string[] =>
+  [...new Set(tokens(question))].filter((w) => w.length >= 3 && !STOP_WORDS.has(w));
+
+/** Lowercase letter/digit runs: "228 Stone-Ridge (SC)" → ["228", "stone", "ridge", "sc"]. */
+const tokens = (text: string): string[] => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+
+/**
+ * The words of a question plus each run of two and three neighbouring words joined, so speech that
+ * splits a name ("Stone Ridge") still meets a name written as one word ("Stoneridge").
+ */
+const questionTerms = (question: string): Set<string> => {
+  const words = tokens(question);
+  const terms = new Set(words);
+  for (let i = 0; i < words.length; i++) {
+    if (i + 1 < words.length) terms.add(words[i]! + words[i + 1]!);
+    if (i + 2 < words.length) terms.add(words[i]! + words[i + 1]! + words[i + 2]!);
+  }
+  return terms;
 };
+
+/**
+ * Ways a subject can be named: the whole name without bracketed notes, and each part of a name
+ * written as "A / B". Each variant is the list of its tokens.
+ */
+const nameVariants = (name: string): string[][] => {
+  const plain = name.replace(/\([^)]*\)/g, ' ');
+  return [plain, ...plain.split('/')].map(tokens).filter((t) => t.length > 0);
+};
+
+/**
+ * True when every token of some variant of the name is a term of the question. Numbers must match
+ * exactly, so "Pine 2" is not found in a question about "Pine 21". Returns the size of the best
+ * variant matched (more tokens = more specific), or 0.
+ */
+export const nameMatchScore = (name: string, terms: ReadonlySet<string>): number =>
+  Math.max(0, ...nameVariants(name).filter((v) => v.every((t) => terms.has(t))).map((v) => v.length));
 
 export function createMemory(input: OpsMemoryConfig): OpsMemory {
   const config = resolveConfig(input);
@@ -73,16 +120,19 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
   const init = () => (ready ??= store.migrate());
 
   async function subjectsInQuestion(question: string): Promise<SourceSubject[]> {
-    const found = new Map<string, SourceSubject>();
-    for (const name of candidateNames(question)) {
-      for (const s of await store.findSubjects(name)) {
-        // A name has to appear as a whole in the question: "Pine 2" must not match "Pine 21".
-        const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(s.name)}($|[^\\p{L}\\p{N}])`, 'iu');
-        if (pattern.test(question)) found.set(`${s.type}:${s.id}`, s);
-      }
-      if (found.size >= 5) break;
+    const terms = questionTerms(question);
+    const candidates = new Map<string, SourceSubject>();
+    for (const term of terms) {
+      if (term.length < 3) continue;
+      for (const s of await store.findSubjects(term)) candidates.set(`${s.type}:${s.id}`, s);
     }
-    return [...found.values()];
+    const scored = [...candidates.values()]
+      .map((s) => ({ s, score: nameMatchScore(s.name, terms) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score);
+    // When one name contains another ("Pine 21" and "Pine"), keep the most specific matches only.
+    const best = scored[0]?.score ?? 0;
+    return scored.filter((x) => x.score === best).slice(0, 5).map((x) => x.s);
   }
 
   const api: OpsMemory = {
@@ -138,7 +188,10 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
       for (const s of subjects) {
         facts.push(...(await store.listFacts({ subject: s, status: 'all', limit: Math.ceil(maxFacts / subjects.length) })));
       }
-      if (!subjects.length) facts.push(...(await store.searchFacts({ text: question, status: 'all', limit: maxFacts })));
+      if (!subjects.length) {
+        const words = searchWords(question);
+        if (words.length) facts.push(...(await store.searchFacts({ text: words.join(' '), status: 'all', limit: maxFacts })));
+      }
       return { facts, subjects };
     },
 
@@ -174,4 +227,3 @@ export function createMemory(input: OpsMemoryConfig): OpsMemory {
   return api;
 }
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

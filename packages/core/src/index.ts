@@ -3,6 +3,8 @@ export * from './plugins.js';
 export { defineConfig, resolveConfig, type OpsMemoryConfig, type ResolvedConfig } from './config.js';
 export {
   createMemory,
+  nameMatchScore,
+  searchWords,
   NO_FACTS_ANSWER,
   type OpsMemory,
   type AskOptions,

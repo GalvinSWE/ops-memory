@@ -28,6 +28,11 @@ export interface VoiceAskOptions {
   speak?: boolean;
   /** Give up on the server after this long. Default 60 s; local models can need more. */
   timeoutMs?: number;
+  /**
+   * After the person has said something, send the question once they have been quiet this long.
+   * Pauses shorter than this do not cut the question off. 0: wait for `stop()`. Default 2500 ms.
+   */
+  silenceMs?: number;
   /** For tests or custom transports. Default: global `fetch`. */
   fetch?: typeof fetch;
 }
@@ -71,12 +76,17 @@ export const IDLE_SNAPSHOT: VoiceSnapshot = Object.freeze({
  * called, so it is safe to create during server-side rendering.
  */
 export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
-  let options = { language: 'en-US', speak: true, timeoutMs: 60_000, ...initial };
+  let options = { language: 'en-US', speak: true, timeoutMs: 60_000, silenceMs: 2500, ...initial };
   let snapshot: VoiceSnapshot = IDLE_SNAPSHOT;
   const listeners = new Set<() => void>();
   let recognition: Recognition | null = null;
   let request: AbortController | null = null;
   let finalText = '';
+  let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearSilence = () => {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = null;
+  };
 
   const set = (patch: Partial<VoiceSnapshot>) => {
     snapshot = { ...snapshot, ...patch };
@@ -168,7 +178,8 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
       finalText = '';
       const rec = new Ctor();
       rec.lang = options.language;
-      rec.continuous = false;
+      // Keep listening through pauses; the silence timer (or stop()) ends the question.
+      rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
       rec.onresult = (e) => {
@@ -179,12 +190,17 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
           else interim += r[0]!.transcript;
         }
         set({ transcript: finalText.trim(), interim: interim.trim() });
+        clearSilence();
+        if (options.silenceMs > 0 && (finalText.trim() || interim.trim())) {
+          silenceTimer = setTimeout(() => recognition === rec && rec.stop(), options.silenceMs);
+        }
       };
       rec.onerror = (e) => {
         if (e.error === 'no-speech' || e.error === 'aborted') return;
         set({ state: 'error', error: recognitionErrorMessage(e.error) });
       };
       rec.onend = () => {
+        clearSilence();
         if (recognition !== rec) return;
         recognition = null;
         if (snapshot.state !== 'listening') return;
@@ -203,6 +219,7 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
     },
 
     cancel() {
+      clearSilence();
       recognition?.abort();
       recognition = null;
       const inFlight = request;
@@ -220,6 +237,7 @@ export function createVoiceAsk(initial: VoiceAskOptions): VoiceController {
     },
 
     destroy() {
+      clearSilence();
       recognition?.abort();
       request?.abort();
       stopSpeech();
